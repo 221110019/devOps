@@ -3,9 +3,10 @@ FROM php:8.2-fpm
 
 # ---------- System Setup ----------
 RUN apt-get update && apt-get install -y \
-    nginx default-mysql-server supervisor curl git unzip libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
+    nginx mysql-server supervisor curl git unzip libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring gd zip bcmath \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 
 WORKDIR /var/www/html
 
