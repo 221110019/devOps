@@ -17,7 +17,7 @@ RUN cp .env.example .env \
     && composer install --no-dev --optimize-autoloader \
     && php artisan key:generate \
     && php artisan storage:link
-
+RUN docker-php-ext-install pdo pdo_mysql
 EXPOSE 80 5173
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]
 
