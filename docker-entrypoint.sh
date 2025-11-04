@@ -56,6 +56,11 @@ echo "Creating storage link..."
 php artisan storage:link --force
 echo "Storage link created successfully!"
 
+# Ensure proper permissions
+echo "Setting up permissions..."
+chmod -R 775 storage/
+chmod -R 775 bootstrap/cache/
+
 # Clear and cache config
 echo "Caching configuration..."
 php artisan config:cache

@@ -36,8 +36,8 @@ COPY . .
 
 # Set up storage and bootstrap cache directories with proper permissions
 RUN mkdir -p storage/framework/{sessions,views,cache} \
-    && chmod -R 775 storage \
-    && chmod -R 775 bootstrap/cache
+    && chmod -R 777 storage \
+    && chmod -R 777 bootstrap/cache
 
 # Install PHP dependencies (INCLUDING dev dependencies for Faker)
 RUN composer install --no-scripts --no-autoloader --optimize-autoloader
