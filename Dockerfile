@@ -25,6 +25,10 @@ COPY . .
 RUN composer install --optimize-autoloader --no-dev
 RUN npm install && npm run build
 
+COPY docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
 
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]
