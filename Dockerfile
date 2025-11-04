@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     composer \
     nodejs \
     npm \
+    netcat-openbsd \
     && apt-get clean
 
 COPY . .
