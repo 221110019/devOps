@@ -1,6 +1,10 @@
+# Use official PHP image with FPM
 FROM php:8.2-fpm
+
+# Set working directory
 WORKDIR /var/www
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -24,20 +28,31 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy existing application directory contents
 COPY . .
 
+# Set up storage and bootstrap cache directories with proper permissions
 RUN mkdir -p storage/framework/{sessions,views,cache} \
     && chmod -R 775 storage \
     && chmod -R 775 bootstrap/cache
 
-RUN composer install --no-dev --no-scripts --no-autoloader
+# Install PHP dependencies (INCLUDING dev dependencies for Faker)
+RUN composer install --no-scripts --no-autoloader --optimize-autoloader
+
+# Generate optimized autoloader
 RUN composer dump-autoload --optimize
+
+# Expose port 9000 for PHP-FPM
 EXPOSE 9000
 
+# Create startup script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 
+# Start PHP-FPM server
 CMD ["php-fpm"]
