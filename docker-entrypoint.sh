@@ -21,9 +21,10 @@ wait_for_db
 echo "Giving MySQL extra time to initialize..."
 sleep 10
 
-# Ensure proper permissions
-sudo chown -R www-data:www-data /var/www
-sudo chmod -R 775 storage bootstrap/cache
+# Ensure proper permissions (REMOVED SUDO)
+echo "Setting up permissions..."
+chown -R www-data:www-data /var/www
+chmod -R 775 storage bootstrap/cache
 
 # Copy environment file if it doesn't exist in the container
 if [ ! -f .env ]; then
