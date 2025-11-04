@@ -21,10 +21,17 @@ wait_for_db
 echo "Giving MySQL extra time to initialize..."
 sleep 10
 
+# Ensure we have write permissions
+echo "Setting up permissions..."
+sudo chown -R www-data:www-data /var/www
+sudo chmod -R 755 /var/www
+sudo chmod -R 775 storage bootstrap/cache
+
 # Copy environment file if it doesn't exist in the container
 if [ ! -f .env ]; then
     echo "Copying .env.example to .env..."
     cp .env.example .env
+    sudo chown www-data:www-data .env
 fi
 
 # Update .env with correct database host
@@ -46,20 +53,22 @@ echo "Running database migrations..."
 php artisan migrate --force
 echo "Migrations completed successfully!"
 
-# Seed the database
-echo "Seeding database..."
-php artisan db:seed --force
-echo "Database seeding completed successfully!"
+# Try seeding with better error handling
+echo "Attempting to seed database..."
+set +e
+if php artisan db:seed --force; then
+    echo "Database seeding completed successfully!"
+else
+    echo "WARNING: Database seeding failed, but continuing application setup..."
+    echo "This is not critical - you can run seeding manually later with:"
+    echo "docker-compose exec laravel-app php artisan db:seed"
+fi
+set -e
 
 # Create storage link
 echo "Creating storage link..."
 php artisan storage:link --force
 echo "Storage link created successfully!"
-
-# Ensure proper permissions
-echo "Setting up permissions..."
-chmod -R 775 storage/
-chmod -R 775 bootstrap/cache/
 
 # Clear and cache config
 echo "Caching configuration..."
@@ -69,6 +78,7 @@ php artisan view:cache
 echo "Configuration cached successfully!"
 
 echo "Application setup completed!"
+echo "Your Laravel application is now ready at http://localhost"
 
 # Start PHP-FPM
 exec "$@"

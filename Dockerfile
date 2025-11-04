@@ -34,10 +34,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy existing application directory contents
 COPY . .
 
-# Set up storage and bootstrap cache directories with proper permissions
-RUN mkdir -p storage/framework/{sessions,views,cache} \
-    && chmod -R 777 storage \
-    && chmod -R 777 bootstrap/cache
+# Set proper ownership and permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www \
+    && chmod -R 775 storage \
+    && chmod -R 775 bootstrap/cache
 
 # Install PHP dependencies (INCLUDING dev dependencies for Faker)
 RUN composer install --no-scripts --no-autoloader --optimize-autoloader
@@ -51,6 +52,9 @@ EXPOSE 9000
 # Create startup script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Switch to www-data user
+USER www-data
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 
