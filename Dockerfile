@@ -1,36 +1,43 @@
-# Base PHP image
 FROM php:8.2-fpm
+WORKDIR /var/www
 
-# System dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git unzip curl nodejs npm libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring bcmath gd zip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libzip-dev \
+    default-mysql-client \
+    nano \
+    netcat-openbsd \
+    && docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy project files
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . .
 
-# Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN mkdir -p storage/framework/{sessions,views,cache} \
+    && chmod -R 775 storage \
+    && chmod -R 775 bootstrap/cache
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --no-scripts --no-autoloader
+RUN composer dump-autoload --optimize
+EXPOSE 9000
 
-# Install frontend dependencies & build
-RUN npm install && npm run build
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Setup Laravel app
-RUN cp .env.example .env \
-    && php artisan key:generate \
-    && php artisan migrate --force \
-    && php artisan db:seed --force \
-    && php artisan storage:link
+ENTRYPOINT ["docker-entrypoint.sh"]
 
-# Expose port
-EXPOSE 80
-
-# Start Laravel built-in server
-ENTRYPOINT ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]
+CMD ["php-fpm"]
