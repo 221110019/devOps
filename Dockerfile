@@ -1,15 +1,22 @@
-FROM laravelsail/php82-composer:latest
+# Stage 1: Build assets
+FROM node:23 AS frontend
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
+# Stage 2: Laravel app
+FROM laravelsail/php82-composer:latest
 WORKDIR /var/www/html
 
 COPY . .
+COPY --from=frontend /app/public/build ./public/build
 
 RUN cp .env.example .env \
     && composer install --no-dev --optimize-autoloader \
-    && npm install && npm run build \
     && php artisan key:generate \
     && php artisan storage:link
 
 EXPOSE 80 5173
-
 CMD ["./vendor/bin/sail", "up", "-d"]
