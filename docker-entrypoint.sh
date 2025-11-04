@@ -4,78 +4,42 @@ set -e
 
 echo "Starting application setup..."
 
-# Function to wait for database
-wait_for_db() {
-    echo "Waiting for database at $DB_HOST:$DB_PORT..."
-    while ! nc -z $DB_HOST $DB_PORT; do
-        sleep 2
-        echo "Still waiting for database..."
-    done
-    echo "Database is ready!"
-}
-
 # Wait for database
-wait_for_db
+echo "Waiting for database..."
+while ! nc -z laravel-db 3306; do
+    sleep 2
+done
+echo "Database is ready!"
 
-# Additional wait to ensure MySQL is fully ready
-echo "Giving MySQL extra time to initialize..."
-sleep 10
+sleep 5
 
-# Ensure proper permissions (REMOVED SUDO)
-echo "Setting up permissions..."
-chown -R www-data:www-data /var/www
-chmod -R 775 storage bootstrap/cache
-
-# Copy environment file if it doesn't exist in the container
+# Setup .env
 if [ ! -f .env ]; then
-    echo "Copying .env.example to .env..."
     cp .env.example .env
 fi
 
-# Update .env with correct database host
-echo "Setting up database configuration..."
+# Set database config
 sed -i "s/DB_HOST=.*/DB_HOST=laravel-db/" .env
 sed -i "s/DB_DATABASE=.*/DB_DATABASE=laravel/" .env
 sed -i "s/DB_USERNAME=.*/DB_USERNAME=laravel/" .env
 sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=secret/" .env
 
-# Generate application key if not set
-if ! grep -q "APP_KEY=base64:" .env; then
-    echo "Generating application key..."
-    php artisan key:generate --force
-    echo "Application key generated successfully!"
-fi
+# Generate key
+php artisan key:generate --force
 
-# Run database migrations
-echo "Running database migrations..."
+# Run migrations
 php artisan migrate --force
-echo "Migrations completed successfully!"
 
-# Try seeding with better error handling
-echo "Attempting to seed database..."
-set +e
-if php artisan db:seed --force; then
-    echo "Database seeding completed successfully!"
-else
-    echo "WARNING: Database seeding failed, but continuing application setup..."
-    echo "This is not critical - you can run seeding manually later with:"
-    echo "docker-compose exec laravel-app php artisan db:seed"
-fi
-set -e
+# Seed if needed (optional)
+php artisan db:seed --force || true
 
 # Create storage link
-echo "Creating storage link..."
 php artisan storage:link --force
-echo "Storage link created successfully!"
 
-# Clear and cache config
-echo "Caching configuration..."
+# Cache config
 php artisan config:cache
 php artisan route:cache
-echo "Configuration cached successfully!"
 
-echo "Application setup completed!"
-echo "Your Laravel application is now ready at http://localhost"
+echo "Application ready!"
 
-# Start PHP-FPM
 exec "$@"

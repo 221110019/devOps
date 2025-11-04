@@ -1,19 +1,7 @@
-# Frontend build stage with Node.js 20
-FROM node:20 as frontend
-
-WORKDIR /var/www
-
-# Copy package files first for better caching
-COPY package*.json ./
-RUN npm install
-
-# Copy source files and build
-COPY . .
-RUN npm run build
-
-# PHP stage
+# Use official PHP image with FPM
 FROM php:8.2-fpm
 
+# Set working directory
 WORKDIR /var/www
 
 # Install system dependencies
@@ -29,6 +17,8 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     nano \
     netcat-openbsd \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && docker-php-ext-install \
     pdo_mysql \
     mbstring \
@@ -43,19 +33,18 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy application code
+# Copy entire application
 COPY . .
 
-# Copy built assets from frontend stage
-COPY --from=frontend /var/www/public/build /var/www/public/build
-
-# Create storage directories with proper permissions
-RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs \
-    && chown -R www-data:www-data /var/www \
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www \
     && chmod -R 775 storage bootstrap/cache
 
 # Install PHP dependencies
-RUN composer install --no-scripts --no-autoloader --optimize-autoloader
+RUN composer install --no-dev --no-scripts --no-autoloader --optimize-autoloader
+
+# Install and build frontend assets
+RUN npm install && npm run build
 
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
