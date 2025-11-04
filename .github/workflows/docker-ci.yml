@@ -1,28 +1,31 @@
-name: CI/CD Docker Image to Docker Hub
+name: CI/CD - Build and Push Docker Image
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout source
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t 221110019/devops-laravel:latest .
-          docker push 221110019/devops-laravel:latest
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: 221110019/devops-laravel:latest
+          cache-from: type=registry,ref=221110019/devops-laravel:cache
+          cache-to: type=inline
