@@ -19,4 +19,5 @@ RUN cp .env.example .env \
     && php artisan storage:link
 
 EXPOSE 80 5173
-CMD ["./vendor/bin/sail", "up", "-d"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]
+
