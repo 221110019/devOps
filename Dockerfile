@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 
-RUN composer install --optimize-autoloader --no-dev
+RUN composer install --optimize-autoloader
 RUN npm install && npm run build
 
 COPY docker-entrypoint.sh /
