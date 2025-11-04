@@ -40,8 +40,8 @@ COPY . .
 RUN chown -R www-data:www-data /var/www \
     && chmod -R 775 storage bootstrap/cache
 
-# Install PHP dependencies
-RUN composer install --no-dev --no-scripts --no-autoloader --optimize-autoloader
+# Install PHP dependencies (INCLUDING DEV for Faker)
+RUN composer install --no-scripts --no-autoloader --optimize-autoloader
 
 # Install and build frontend assets
 RUN npm install && npm run build
