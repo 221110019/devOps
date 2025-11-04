@@ -19,10 +19,12 @@ RUN composer install --no-dev --optimize-autoloader
 RUN npm install
 RUN npm run build
 
-RUN cp .env.example .env \
-    && php artisan key:generate \
-    && php artisan migrate --force \
-    && php artisan storage:link
-
 EXPOSE 80 5173
-CMD ["php", "-S", "0.0.0.0:80", "-t", "public"]
+
+CMD bash -c "\
+    cp .env.example .env && \
+    php artisan key:generate && \
+    php artisan migrate --force && \
+    php artisan storage:link && \
+    php -S 0.0.0.0:80 -t public \
+"
