@@ -1,8 +1,6 @@
-#!/bin/sh
-
+#!/bin/bash
 set -e
 
-# Wait for database
 echo "Waiting for database..."
 while ! nc -z mysql 3306; do
     sleep 2
@@ -24,4 +22,5 @@ php artisan route:cache
 
 echo "Application is ready!"
 
-exec supervisord -c /etc/supervisor/conf.d/supervisord.conf
+# Start PHP development server
+exec php artisan serve --host=0.0.0.0 --port=80
