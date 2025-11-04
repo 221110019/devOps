@@ -11,7 +11,7 @@ Option:
 -   WSL2 engine (sebaiknya Ubuntu)
 -   Sebaiknya run command dengan terminal Ubuntu (bukan Powershell etc), performa lebih cepat
 
-# Docker Image
+# [OPTION 1] Docker Image, no source code
 
 -   Harus Install Docker Desktop dan WSL2 (disarankan Ubuntu)
 -   Docker Desktop with WSL2 engine integration enabled pada setting
@@ -39,7 +39,7 @@ atau
 docker-compose up -d && docker-compose logs -f laravel.test-1`
 ```
 
--   Akses web appp di http://localhost
+-   Akses web app di http://localhost
 
 -   Stop
 
@@ -61,7 +61,7 @@ docker volume prune -a -f
 docker system prune -a -f
 ```
 
-# Laravel Sail
+# [OPTION 2] Laravel Sail, with source code
 
 -   Locate ke path folder
 

@@ -1,7 +1,4 @@
-#!/bin/bash
 set -e
-
-# Wait for database
 while ! nc -z mysql 3306; do sleep 2; done
 
 cp .env.example .env
