@@ -10,21 +10,19 @@ RUN apt-get update && apt-get install -y software-properties-common curl git unz
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
 WORKDIR /var/www/html
-
 COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
 RUN npm install
 RUN npm run build
 
-EXPOSE 80 5173
+COPY .env.production .env
 
-CMD bash -c "\
-    cp .env.example .env && \
-    php artisan key:generate && \
-    php artisan migrate --force && \
-    php artisan storage:link && \
-    php -S 0.0.0.0:80 -t public \
-"
+RUN php artisan key:generate
+RUN php artisan migrate --force
+RUN php artisan db:seed
+RUN php artisan storage:link
+
+EXPOSE 80
+CMD php -S 0.0.0.0:80 -t public
