@@ -1,14 +1,21 @@
-FROM composer:2.7 AS build
+FROM node:20 AS nodebuild
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
+FROM composer:2.7 AS composerbuild
 WORKDIR /app
 COPY . .
 RUN composer install --no-dev --optimize-autoloader
-RUN npm install && npm run build
 
 FROM php:8.3-apache
-
 WORKDIR /var/www/html
-COPY --from=build /app ./
+
+COPY --from=composerbuild /app ./
+COPY --from=nodebuild /app/public ./public
+
 RUN docker-php-ext-install pdo pdo_mysql
 RUN php artisan key:generate && php artisan migrate --force && php artisan storage:link
 
