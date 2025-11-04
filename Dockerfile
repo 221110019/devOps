@@ -1,7 +1,19 @@
-# Use official PHP image with FPM
+# Frontend build stage with Node.js 20
+FROM node:20 as frontend
+
+WORKDIR /var/www
+
+# Copy package files first for better caching
+COPY package*.json ./
+RUN npm install
+
+# Copy source files and build
+COPY . .
+RUN npm run build
+
+# PHP stage
 FROM php:8.2-fpm
 
-# Set working directory
 WORKDIR /var/www
 
 # Install system dependencies
@@ -17,8 +29,6 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     nano \
     netcat-openbsd \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
     && docker-php-ext-install \
     pdo_mysql \
     mbstring \
@@ -33,8 +43,11 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy existing application directory contents
+# Copy application code
 COPY . .
+
+# Copy built assets from frontend stage
+COPY --from=frontend /var/www/public/build /var/www/public/build
 
 # Create storage directories with proper permissions
 RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs \
@@ -44,25 +57,15 @@ RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs \
 # Install PHP dependencies
 RUN composer install --no-scripts --no-autoloader --optimize-autoloader
 
-# Install npm dependencies and build assets
-RUN if [ -f package.json ]; then \
-    npm install && npm run build; \
-    fi
-
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
 
-# Expose port 9000 for PHP-FPM
 EXPOSE 9000
 
-# Create startup script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Switch to www-data user
 USER www-data
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-
-# Start PHP-FPM server
 CMD ["php-fpm"]
