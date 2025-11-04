@@ -12,7 +12,7 @@
         type="image/png"
         href="https://icons.iconarchive.com/icons/iconarchive/incognito-animal-2/256/Cat-Cool-icon.png"
     >
-    <title>Heyroar!!</title>
+    <title>Heyroar!! Nice to meow you</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
