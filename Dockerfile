@@ -1,7 +1,19 @@
-# Use official PHP image with FPM
+# Build stage for frontend assets
+FROM node:18 as frontend
+
+WORKDIR /var/www
+
+# Copy package files first for better caching
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copy source files and build
+COPY . .
+RUN npm run build
+
+# PHP stage
 FROM php:8.2-fpm
 
-# Set working directory
 WORKDIR /var/www
 
 # Install system dependencies
@@ -31,14 +43,17 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy existing application directory contents
+# Copy application code
 COPY . .
 
+# Copy built frontend assets from frontend stage
+COPY --from=frontend /var/www/public/build /var/www/public/build
+COPY --from=frontend /var/www/node_modules /var/www/node_modules
+
 # Create storage directories with proper permissions
-RUN mkdir -p storage/framework/{sessions,views,cache} \
+RUN mkdir -p storage/framework/{sessions,views,cache} storage/logs \
     && chown -R www-data:www-data /var/www \
-    && chmod -R 775 storage \
-    && chmod -R 775 bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache
 
 # Install PHP dependencies
 RUN composer install --no-scripts --no-autoloader --optimize-autoloader
@@ -46,14 +61,12 @@ RUN composer install --no-scripts --no-autoloader --optimize-autoloader
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
 
-# Expose port 9000 for PHP-FPM
 EXPOSE 9000
 
-# Create startup script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+USER www-data
 
-# Start PHP-FPM server
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]

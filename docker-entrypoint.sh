@@ -21,9 +21,9 @@ wait_for_db
 echo "Giving MySQL extra time to initialize..."
 sleep 10
 
-# Set proper permissions
-chown -R www-data:www-data /var/www
-chmod -R 775 storage bootstrap/cache
+# Ensure proper permissions
+sudo chown -R www-data:www-data /var/www
+sudo chmod -R 775 storage bootstrap/cache
 
 # Copy environment file if it doesn't exist in the container
 if [ ! -f .env ]; then
@@ -67,11 +67,10 @@ echo "Creating storage link..."
 php artisan storage:link --force
 echo "Storage link created successfully!"
 
-# Clear and cache config (BUT NOT VIEWS - this causes permission issues)
+# Clear and cache config
 echo "Caching configuration..."
 php artisan config:cache
 php artisan route:cache
-# REMOVED: php artisan view:cache
 echo "Configuration cached successfully!"
 
 echo "Application setup completed!"
